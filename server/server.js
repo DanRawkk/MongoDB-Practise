@@ -7,6 +7,7 @@ const {Todo} = require('./models/todo');
 const {User} = require('./models/user');
 
 const app = express();
+const port = process.env.PORT || 3000;
 
 /* Agregamos un midleware que ara es que transformara el body de los request
 de text a json. */
@@ -68,7 +69,27 @@ app.get('/todos/:id', (req, res) => {
     });
 });
 
+app.delete('/todos/:id', (req, res) => {
+  const id = req.params.id;
+
+  if(!ObjectID.isValid(id)) {
+    return res.status(404).send();
+  }
+
+  Todo.findByIdAndRemove(id)
+    .then((todo) => {
+      if (!todo) {
+        return res.status(400).send();
+      }
+      res.send({todo});
+    })
+    .catch((e) => {
+      return res.status(400).send();
+    });
+
+});
+
 /******************************************************************************/
-app.listen(3000, () => {
-  console.log('Listening on port: 3000');
+app.listen(port, () => {
+  console.log(`Started up at port ${port}`);
 });

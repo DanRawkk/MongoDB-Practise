@@ -9,7 +9,7 @@ para decir que usaremos el sistema de Promises que tiene node. Si queremos usar
 otro modulo de promises, aqui es donde se le asigna. Mongoose por defecto
 trabaja con callbacks asi que para que pueda usar promises se aplica esta */
 
-mongoose.connect('mongodb://localhost:27017/TodoApp');
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/TodoApp');
 /* La diferencia entre mongoose y mongodb es que mongodb al conectarse tiene un
 segundo parametro al que se le pasa un callback y todo el resto del codigo va
 dentro de ese callback. Mientras que en mongoose mantiene esta conexion en el
