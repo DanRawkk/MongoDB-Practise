@@ -6,6 +6,7 @@ const {ObjectID} = require('mongodb');
 const {mongoose} = require('./db/mongoose');
 const {Todo} = require('./models/todo');
 const {User} = require('./models/user');
+const {authenticate} = require('./middleware/authenticate');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -153,7 +154,7 @@ app.delete('/todos/:id', (req, res) => {
 });
 
 /*************************User autentication***********************************/
-
+//Ruta para registrarse
 app.post('/users', (req, res) => {
   const body = _.pick(req.body, ['email', 'password']);
   const user = new User(body);
@@ -170,6 +171,12 @@ app.post('/users', (req, res) => {
     .catch((err) => {
       res.status(400).send(err);
     });
+});
+
+/******************************************************************************/
+//Ruta para conseguir la informacion del usuario conectado.
+app.get('/users/me', authenticate,(req, res) => {
+  res.send(req.user);
 });
 
 /******************************************************************************/

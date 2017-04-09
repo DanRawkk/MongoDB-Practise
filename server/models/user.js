@@ -74,6 +74,39 @@ UserSchema.methods.generateAuthToken = function() {
   });
 }
 
-var User = mongoose.model('User', UserSchema);
+UserSchema.statics.findByToken = function(token) {
+  const User = this; //Este va ligado al modelo y no a la instancia de 'usuario'
+  /*Esta ira sin definir porque asi como nos puede regresar
+  el resultado decodificado, tambien nos puede retornar el error*/
+  let decoded;
+  /* El bloke 'try catch' lo que hace es que prueba el codigo que esta en 'try'
+  y si nos da un error se detiene y pasa de imediato a catch que manejara el
+  error y nos retornara algo sin tener que detener el programa. */
+  try {
+    decoded = jwt.verify(token, 'abc123');
+  } catch(e) {
+    /* En caso de fallar retornamos una Promise que nos mande reject para que
+    no siga corriendo el codigo y podamos manejar la Promise con 'catch' */
+    // return new Promise((resolve, reject) => {
+    //   reject();
+    // });
+    return Promise.reject();
+    /* Esto es lo mismo que el codigo de arriba pero mas simplificado, hace
+    exactamente lo mismo, tambien si queremos podemos pasarle un argumento a
+    'reject' que sera el mensaje que agarrara el 'catch(e)' y nos imprimirá. */
+  }
+  /* Despues de decodificar haremos una busqueda con 'findOne' con las propiedades
+  del objeto decodificado.
+    Al tener que sacar propiedades anidadas, entonces lo ponemos entre comillas
+  para que podamos acceder a ellos, y en este caso apra que no desentone el id tmb.
+   */
+  return User.findOne({
+    '_id': decoded._id,
+    'tokens.token': token,
+    'tokens.access': 'auth'
+  });
+}
+
+const User = mongoose.model('User', UserSchema);
 
 module.exports = {User};
