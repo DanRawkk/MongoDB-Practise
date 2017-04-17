@@ -1,7 +1,22 @@
 const {SHA256} = require('crypto-js');
+const jwt = required('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 /* NOTA: Este ejemplo es solo para demostrar en resumen como es la autenticacion.
 En la verdadera app no usaremos esta libreria sino JWT (JasonWebToken) que soporta
 todas estas funciones que aqui se demuestran. */
+
+const pass = 'hi123';
+
+/* Con bcryptjs vamos a hacerle hash y saltear las contraseñas.
+Primero le crearemos un 'Salt' de 10 de largo y le pasaremos una funcion que
+recibira el salteo y el error y dentro de esta funcion ya hacemos el hash con el
+salteo. */
+bcrypt.getSalt(10, (err, salt) => {
+    bcrypt.hash(pass, salt, (err, hash) => {
+        console.log(hash);
+    });
+});
+
 const message = 'Hi :3';
 const hash = SHA256(message).toString();
 

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 /* Creamos un 'Schema' que nos permitirá crear nuevas instancias de este modelo.
 A su ves tambien le podremos agregar metodos que eredarán las nuevas instancias. */
@@ -106,6 +107,32 @@ UserSchema.statics.findByToken = function(token) {
     'tokens.access': 'auth'
   });
 }
+
+/* Para encriptar las contraseñas se ara antes de ser guardadas en la BD.
+Para hacer eso debemos de usar los middlewares de mongoose que nos permiten
+hacer acciones en diferentes momentos, en este caso sera antes de guardar.
+  A la funcion le tenemos que pasar el 'next' y correr este en algun momento
+de la funcion o nunca terminara de correr el middleware y se quedara estancado
+ahí.
+
+  Este midleware correra cada ves que un usuario se vaya a guardar, lo que
+significa que si el usuario modifica algun dato como su email, este middleware
+correra de nuevo, y si solo se modifico el email y la contraseña no (osea que la
+contraseña sigue encryptada) la contraseña se volvera a encriptar. lo que causaria
+una doble encryptacion  y por consiguiente un error.
+  Entonces lo que tenemos que hacer es preguntar si la contraseña a sido
+modificada o no, y si a sido modificada entonces la encryptamos y si no a sido
+modificada entonces la dejamos como esta. Para eso usaremos 'user.isModified'
+que nos dira si el campo que le pasamos a sido modificado.
+src: http://mongoosejs.com/docs/middleware.html */
+UserSchema.pre('save', function (next) => {
+  const user = this;
+  if(user.isModified('password')) {
+
+  } else {
+    next();
+  }
+});
 
 const User = mongoose.model('User', UserSchema);
 
