@@ -3,6 +3,9 @@ const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 const bcrypt = require('bcryptjs');
+/*Bcryptjs source:
+https://www.npmjs.com/package/bcryptjs
+*/
 
 /* Creamos un 'Schema' que nos permitirá crear nuevas instancias de este modelo.
 A su ves tambien le podremos agregar metodos que eredarán las nuevas instancias. */
@@ -108,6 +111,24 @@ UserSchema.statics.findByToken = function(token) {
   });
 }
 
+UserSchema.statics.findByCredentials = function(email, password) {
+  const User = this;
+  return User.findOne({email}).then((user) => {
+    if(!user) {
+      return Promise.reject();
+    }
+    return new Promise((resolve, reject) => {
+      bcrypt.compare(password, user.password, (err, res) => {
+        if(res) {
+          resolve(user);
+        } else {
+          reject();
+        }
+      });
+    });
+  });
+};
+
 /* Para encriptar las contraseñas se ara antes de ser guardadas en la BD.
 Para hacer eso debemos de usar los middlewares de mongoose que nos permiten
 hacer acciones en diferentes momentos, en este caso sera antes de guardar.
@@ -125,10 +146,15 @@ modificada o no, y si a sido modificada entonces la encryptamos y si no a sido
 modificada entonces la dejamos como esta. Para eso usaremos 'user.isModified'
 que nos dira si el campo que le pasamos a sido modificado.
 src: http://mongoosejs.com/docs/middleware.html */
-UserSchema.pre('save', function (next) => {
+UserSchema.pre('save', function (next) {
   const user = this;
   if(user.isModified('password')) {
-
+    bcrypt.genSalt(10, (err, salt) => {
+        bcrypt.hash(user.password, salt, (err, hash) => {
+            user.password = hash;
+            next();
+        });
+    });
   } else {
     next();
   }

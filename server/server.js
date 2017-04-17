@@ -173,6 +173,23 @@ app.post('/users', (req, res) => {
     });
 });
 
+//Ruta para hacer 'login'
+/* Se le mandara el correo y la contraseña y se checara si existe el usuario y
+la contraseña, y si es asi nos regresara el token para la sesion de igual manenera
+que al registrarce. */
+app.post('/users/login', (req, res) => {
+  const body = _.pick(req.body, ['email', 'password']);
+  User.findByCredentials(body.email, body.password)
+    .then((user) => {
+      return user.generateAuthToken().then((token) => {
+        res.header('x-auth', token).send(user);
+      });
+    })
+    .catch((err) => {
+      res.status(400).send();
+    });
+});
+
 /******************************************************************************/
 //Ruta para conseguir la informacion del usuario conectado.
 app.get('/users/me', authenticate,(req, res) => {
