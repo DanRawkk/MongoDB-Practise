@@ -78,6 +78,25 @@ UserSchema.methods.generateAuthToken = function() {
   });
 }
 
+UserSchema.methods.removeToken = function(token) {
+  /* Al querer eliminar un token de nuestra lista de tokens (lineas de la 31 a
+  la 42 Porque podemos tener diferentes tokens para diferentes cosas) y queremos
+  borrar exactamente uno, usamos '$pull' (un mongoDB operator) que nos permite
+  eliminar 'items' de un array que encajen con un criterio dado Y si el token
+  no hace match con niuno del array entonces no remueve nada.
+    Si encuentra un token no solo eliminara el token sino todo el objeto 'token'
+  con sus propiedades 'id', 'acces' y el 'token' (como se ve en la linea 65-67). */
+  const user = this;
+  
+  return user.update({
+    $pull: {
+      tokens: {
+        token: token
+      }
+    }
+  });
+}
+
 UserSchema.statics.findByToken = function(token) {
   const User = this; //Este va ligado al modelo y no a la instancia de 'usuario'
   /*Esta ira sin definir porque asi como nos puede regresar

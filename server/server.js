@@ -190,6 +190,18 @@ app.post('/users/login', (req, res) => {
     });
 });
 
+/****************************User LogOut***************************************/
+//Ruta para desloguearse. Esta elimina el token.
+app.delete('/users/me/token', authenticate,(req, res) => {
+  req.user.removeToken(req.token)//Al remover el token le pasamos una Promise para
+    .then(() => {//saber que se a eliminado el token, asi que no tenemos que pasarle
+      //nada a la funsion.
+      res.status(200).send();
+    }).catch((err) => {
+      res.status(400).send();
+    });
+});
+
 /******************************************************************************/
 //Ruta para conseguir la informacion del usuario conectado.
 app.get('/users/me', authenticate,(req, res) => {
