@@ -9,7 +9,7 @@ const {User} = require('./models/user');
 const {authenticate} = require('./middleware/authenticate');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3003;
 
 /* Agregamos un midleware que ara es que transformara el body de los request
 de text a json. */
@@ -17,10 +17,12 @@ app.use(bodyParser.json());
 
 
 /******************************************************************************/
-/* Creamos la ruta para crear nuevos todos */
-app.post('/todos', (req, res) => {
+/* Creamos la ruta para crear nuevos todos, usamos el midleware 'authenticate'
+para hacer la ruta privada y le pasamos el id del usuarios para crear un todo */
+app.post('/todos', authenticate, (req, res) => {
   var todo = new Todo({
-    text: req.body.text
+    text: req.body.text,
+    _creator: req.user._id
   });
 
   todo.save().then((doc) => {
@@ -33,8 +35,10 @@ app.post('/todos', (req, res) => {
 });
 /******************************************************************************/
 /* Con este pediremos todos los posts */
-app.get('/todos', (req,res) => {
-  Todo.find().then((todos) => {
+app.get('/todos', authenticate, (req,res) => {
+  Todo.find({
+    _creator: req.user._id //La ruta solo deve regresar todos del usuario conectado
+  }).then((todos) => {
     /* La respuesta nos mandara un array de los todos. y auqnue podriamos solo
     resivirlo y enviarlo asi "res.send(todos)" no es la mejor forma porque si
     queremos agregarle mas configuraciones como el status code y esas cosas, no
@@ -49,17 +53,20 @@ app.get('/todos', (req,res) => {
 /******************************************************************************/
 
 /* Lo que aqui se ve esta mejor explicado en /playground/mongoose-queries.js */
-app.get('/todos/:id', (req, res) => {
+app.get('/todos/:id', authenticate, (req, res) => {
   /* En 'req.params' se encuentran los parametros que pasamos al url con el 'key'
   que nostros escribimos arriba, en este caso "id". Osea que lo que pasemos
   despues de '/todos/' se convertira en nuestro  parametro 'id' */
   const id = req.params.id;
 
-  if(!ObjectID.isValid(id)) {
+  if(!ObjectID.isValid({
+    _id: id,
+    _creator: req.user._id
+  })) {
     return res.status(404).send();
   }
 
-  Todo.findById(id)
+  Todo.findOne(id)
     .then((todo) => {
       if (!todo) {
         return res.status(400).send();
@@ -72,7 +79,7 @@ app.get('/todos/:id', (req, res) => {
 });
 /******************************************************************************/
 /* Con patch lo que aremos sera hacer updates a nuestros post. */
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id',authenticate, (req, res) => {
   const id = req.params.id;
   /* En el caso de hacer un 'update' queremos que el usuario solo pueda acceder
   a las caracteristicas que queremos del objeto y no a todos como en este caso
@@ -120,7 +127,10 @@ app.patch('/todos/:id', (req, res) => {
     Y en el 'callback' lo que queremos que aga al finalisar.
 
   src: http://mongoosejs.com/docs/api.html#model_Model.findByIdAndUpdate */
-  Todo.findByIdAndUpdate(id, {$set: body}, {new: true, runValidators: true})
+  Todo.findOneAndUpdate({
+    _id: id,
+    _creator: req.user._id
+  }, {$set: body}, {new: true, runValidators: true})
     .then((todo) => {
       if(!todo) {
         return res.status(404).send();
@@ -133,15 +143,17 @@ app.patch('/todos/:id', (req, res) => {
 });
 
 /******************************************************************************/
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', authenticate, (req, res) => {
   const id = req.params.id;
 
   if(!ObjectID.isValid(id)) {
     return res.status(404).send();
   }
 
-  Todo.findByIdAndRemove(id)
-    .then((todo) => {
+  Todo.findOneAndRemove({
+    _id: id,
+    _creator: req.user._id
+  }).then((todo) => {
       if (!todo) {
         return res.status(400).send();
       }

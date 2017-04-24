@@ -22,6 +22,10 @@ const Todo = mongoose.model('Todo', {
     default: null
     /*Como completedAtmuestra la hora en la que fue completada, y por default
     no puede estar compeltada, entonces ponemos que por default es null.*/
+  },
+  _creator: {// Este objeto contendra la informacion del que creo el todo
+    type: mongoose.Schema.Types.ObjectId,//Asi decimos que sera un objeto ID de mongoose
+    required: true //Sin un id es imposible crear un todo
   }
 });
 
